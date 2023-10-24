@@ -9,11 +9,12 @@ from pathlib import Path
 import boto3
 from tqdm import tqdm
 
-BUCKET, SRC, DST = "r2d2-data", "lab-uploads", "lab-uploads-json"
+# AUTOLab, CLVR, GuptaLab, ILIAD, IPRL, IRIS, PennPAL, RAD, RAIL, REAL, TRI
+BUCKET, SRC, DST = "r2d2-data", "lab-uploads/TRI", "lab-uploads-json"
 
 
 def trajectory2json() -> None:
-    print("[*] Lifting JSON files from s3://r2d2-data/lab-uploads --> s3://r2d2-data/lab-uploads-json")
+    print(f"[*] Lifting JSON files from s3://{BUCKET}/{SRC} --> s3://{BUCKET}/{DST}")
 
     # Initialize S3 Client
     session = boto3.Session(profile_name="r2d2-poweruser")

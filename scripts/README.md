@@ -24,7 +24,7 @@ To upload new demonstrations:
 1. Install new Python dependencies for post-processing (`pip install -e .`); should install `boto3` and `pyrallis`.
 
 2. Read and familiarize yourself with the script `scripts/postprocess.py`, especially the arguments in the
-   dataclass `R2D2UploadConfig`. Note the labs and members defined in `REGISTERED_MEMBERS`.
+   dataclass `R2D2UploadConfig` (in the python file). Note the labs and members defined in `REGISTERED_MEMBERS`.
    + If your lab is not in the dictionary, add it (along with your first member's name + associated 8-character ID).
    + The comments above the dictionary definition walk through how to add new members (and generate IDs)!
 

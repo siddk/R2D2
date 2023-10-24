@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 def export_mp4(svo_file: Path, mp4_dir: Path, stereo_view: str = "left", show_progress: bool = False) -> bool:
     """Reads an SVO file, dumping the export MP4 to the desired path; supports ZED SDK 3.8.* and 4.0.* ONLY."""
-    mp4_out = mp4_dir / f"{svo_file.stem}.mp4"
+    mp4_out = (mp4_dir / f"{svo_file.stem}.mp4") if stereo_view != "both" else (mp4_dir / f"{svo_file.stem}-stereo.mp4")
     sdk_version, use_sdk_4 = sl.Camera().get_sdk_version(), None
     if not (sdk_version.startswith("4.0") or sdk_version.startswith("3.8")):
         raise ValueError("Function `export_mp4` only supports ZED SDK 3.8 OR 4.0; if you see this, contact Sidd!")
@@ -47,7 +47,7 @@ def export_mp4(svo_file: Path, mp4_dir: Path, stereo_view: str = "left", show_pr
         width, height = resolution.width, resolution.height
 
     # Create ZED Image Containers
-    assert stereo_view in {"left", "right"}, f"Invalid View to Export `{stereo_view}`!"
+    assert stereo_view in {"left", "both"}, f"Invalid View to Export `{stereo_view}`!"
     img_container = sl.Mat()
 
     # Create a VideoWriter with the MP4V Codec
@@ -55,7 +55,7 @@ def export_mp4(svo_file: Path, mp4_dir: Path, stereo_view: str = "left", show_pr
         str(mp4_out),
         cv2.VideoWriter_fourcc(*"mp4v"),
         fps,
-        (width, height),
+        (width if stereo_view == "left" else 2 * width, height),
     )
     if not video_writer.isOpened():
         print(f"Error Opening CV2 Video Writer; check the MP4 path `{mp4_out}` and permissions!")
@@ -74,7 +74,7 @@ def export_mp4(svo_file: Path, mp4_dir: Path, stereo_view: str = "left", show_pr
         # [NOTE SDK SEMANTICS] --> ZED SDK 4.0 introduces `sl.ERROR_CODE.END_OF_SVOFILE_REACHED`
         if (grabbed == sl.ERROR_CODE.SUCCESS) or (use_sdk_4 and (grabbed == sl.ERROR_CODE.END_OF_SVOFILE_REACHED)):
             svo_position = zed.get_svo_position()
-            zed.retrieve_image(img_container, {"left": sl.VIEW.LEFT, "right": sl.VIEW.RIGHT}[stereo_view])
+            zed.retrieve_image(img_container, {"left": sl.VIEW.LEFT, "both": sl.VIEW.SIDE_BY_SIDE}[stereo_view])
 
             # Copy image data into VideoWrite after converting to RGB
             rgb = cv2.cvtColor(img_container.get_data(), cv2.COLOR_RGBA2RGB)
