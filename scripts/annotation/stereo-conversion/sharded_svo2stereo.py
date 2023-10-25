@@ -8,7 +8,7 @@ demonstrations, downloading the SVO files, exporting the side-by-side stereo MP4
 Prior to running --> run `aws configure sso` for the R2D2 PowerUser Bucket (Sandbox 7691) and set the profile name
 to `r2d2-poweruser`
 
-Run (from current directory) with: `python sharded_svo2stereo.py X-SHARD-{i}.json`
+Run (from current directory) with: `python sharded_svo2stereo.py X-SHARD-{i}.json <UNIQUE_INT_ID>`
 """
 import json
 import os
@@ -42,7 +42,7 @@ def s3upload(stereo_mp4: Path, name: str, client: "boto3.Client") -> Tuple[bool,
         return False, str(e)
 
 
-def sharded_svo2stereo(shard: Path) -> None:
+def sharded_svo2stereo(shard: Path, unique_id: int) -> None:
     print(f"[*] Converting SVO -> Stereo MPR (stitched left/right) for all Demos in `{shard}`")
 
     # Initialize S3 Client
@@ -55,7 +55,7 @@ def sharded_svo2stereo(shard: Path) -> None:
         cache = json.load(f)
 
     # Stage 2 :: Iterate through `cache["new"]` and handle exports from SVO...
-    os.makedirs(tmp := Path("/tmp/r2d2-stereo-conversion"), exist_ok=True)
+    os.makedirs(tmp := Path(f"/tmp/r2d2-stereo-conversion-{unique_id}"), exist_ok=True)
     try:
         n_success, n_errored = 0, 0
         pbar_desc = "[*] Iterating though Trajectories => ({n_success} Successful / {n_errored} Errored)"
@@ -174,9 +174,10 @@ def sharded_svo2stereo(shard: Path) -> None:
 if __name__ == "__main__":
     parser = ArgumentParser(description="Specify a path to a `X-SHARD-{i}.json file to process!")
     parser.add_argument("shard_filepath", type=str, help="Path to `X-SHARD-{i}.json file to process.")
+    parser.add_argument("unique_id", type=int, help="Unique number for given process to prevent file overwrites.")
     args = parser.parse_args()
 
     shard_file = Path(args.shard_filepath)
     assert shard_file.exists(), f"Shard File `{shard_file}` does not exist!"
 
-    sharded_svo2stereo(shard_file)
+    sharded_svo2stereo(shard_file, args.unique_id)
