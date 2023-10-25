@@ -4,6 +4,9 @@ svo2stereo.py
 Standalone script that iterates through the exhaustive set of trajectory metadata (`s3://r2d2-data/lab-uploads-json`)
 and pulls out left/right SVOs to create & export stereo MP4s. Downloads them to disk & uses the ZED SDK to fuse, then
 uploads back to the S3 bucket.
+
+Prior to running --> run `aws configure sso` for the R2D2 PowerUser Bucket (Sandbox 7691) and set the profile name
+to `r2d2-poweruser`
 """
 import json
 import os
@@ -39,7 +42,7 @@ def s3upload(stereo_mp4: Path, name: str, client: "boto3.Client") -> Tuple[bool,
         return False, str(e)
 
 
-def svo2stereo() -> None:
+def full_svo2stereo() -> None:
     print(f"[*] Bulk Converting SVO -> Stereo MP4 (stitched left/right) for all Demos in s3://{BUCKET}/{RAW_DATA}")
 
     # Initialize S3 Client
@@ -122,14 +125,14 @@ def svo2stereo() -> None:
                 wrist_success = export_mp4(tmp_wrist, tmp, stereo_view="both")
                 if not (left_success and right_success and wrist_success):
                     print(
-                        f"\t=>> Failure to Convert SVO -- (Left: {left_success}, Right: {right_success}, Wrist:"
-                        f" {wrist_success})!"
+                        "\t=>> Failure to Convert SVO -- "
+                        f"(Left: {left_success}, Right: {right_success}, Wrist: {wrist_success})!"
                     )
                     cache["errored"][fpath] = [
                         utcnow(),
                         (
-                            f"Error: Failure to Convert SVO -- (Left: {left_success}, Right: {right_success}, Wrist:"
-                            f" {wrist_success})!"
+                            "Error: Failure to Convert SVO -- "
+                            f"(Left: {left_success}, Right: {right_success}, Wrist: {wrist_success})!"
                         ),
                     ]
                     cache["new"].pop(fpath)
@@ -162,14 +165,14 @@ def svo2stereo() -> None:
 
                 else:
                     print(
-                        f"\t=>> Failure to Upload MP4 -- (Left: {left_maybe_success}, Right: {right_maybe_success},"
-                        f" Wrist: {wrist_maybe_success})!"
+                        "\t=>> Failure to Upload MP4 -- "
+                        f"(Left: {left_maybe_success}, Right: {right_maybe_success}, Wrist: {wrist_maybe_success})!"
                     )
                     cache["errored"][fpath] = [
                         utcnow(),
                         (
-                            f"Error: Failure to Upload MP4 -- (Left: {left_maybe_success}, Right: {right_maybe_success},"
-                            f" Wrist: {wrist_maybe_success})!"
+                            "Error: Failure to Upload MP4 -- "
+                            f"(Left: {left_maybe_success}, Right: {right_maybe_success}, Wrist: {wrist_maybe_success})!"
                         ),
                     ]
                     cache["new"].pop(fpath)
@@ -194,4 +197,4 @@ def svo2stereo() -> None:
 
 
 if __name__ == "__main__":
-    svo2stereo()
+    full_svo2stereo()
